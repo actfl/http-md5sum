@@ -25,15 +25,15 @@ import (
 )
 
 func main() {
-	var parallel uint
+	var err error
+	var parallel int
 	var sites []string
 	{
 		if strings.Contains(os.Args[1], "parallel") || os.Args[1] == "-p" || os.Args[1] == "--p" {
-			p, err := strconv.Atoi(os.Args[2])
+			parallel, err = strconv.Atoi(os.Args[2])
 			if err != nil {
 				panic(err)
 			}
-			parallel = uint(p)
 			sites = os.Args[3:]
 		} else {
 			parallel = 10
