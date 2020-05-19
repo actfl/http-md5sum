@@ -12,6 +12,6 @@ type HttpClient interface {
 type siteResponse struct {
 	site    string
 	success bool
+	err     string
 	md5     [md5.Size]byte
-	err     error
 }

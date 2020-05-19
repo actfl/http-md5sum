@@ -74,6 +74,7 @@ func (h *HttpSum) Ping(sites []string) error {
 
 				md5, err := h.get(site)
 				if err != nil {
+					r.err = err.Error()
 					resp <- r
 				} else {
 					r.success = true
@@ -90,9 +91,9 @@ func (h *HttpSum) Ping(sites []string) error {
 	for i := 0; i < len(sites); i++ {
 		r := <-results
 		if r.success {
-			fmt.Printf("%s \t %x\n", r.site, r.md5)
+			fmt.Printf("%s \t\t %x\n", r.site, r.md5)
 		} else {
-			fmt.Printf("%s: Failed\n", r.site)
+			fmt.Printf("%s \t\t %s\n", r.site, r.err)
 		}
 	}
 	close(jobs)
