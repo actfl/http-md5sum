@@ -32,6 +32,6 @@ go test ./pkg/httpsum/ -v
     --- PASS: TestHttpSum_get/1:_url_not_found (0.00s)
     --- PASS: TestHttpSum_get/2:_timeout (1.00s)
 PASS
-ok      github.com/tomahawk28/http-md5sum/pkg/httpsum   1.018s
+ok  	github.com/actfl/http-md5sum/pkg/httpsum	1.018s
 
 ```
