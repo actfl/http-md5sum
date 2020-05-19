@@ -83,6 +83,7 @@ func (h *HttpSum) Ping(sites []string) error {
 			}
 		}(jobs, results)
 	}
+
 	for _, site := range sites {
 		jobs <- site
 	}
