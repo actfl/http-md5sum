@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tomahawk28/http-md5sum/pkg/httpsum"
+	"github.com/actfl/http-md5sum/pkg/httpsum"
 )
 
 func main() {
