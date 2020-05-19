@@ -1,7 +1,6 @@
 package httpsum
 
 import (
-	"context"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -20,14 +19,14 @@ const (
 
 type Config struct {
 	Client   HttpClient
-	Parallel uint
-	Timeout  uint
+	Parallel int
+	Timeout  int
 }
 
 type HttpSum struct {
 	client   HttpClient
-	parallel uint
-	timeout  uint
+	parallel int
+	timeout  int
 }
 
 func New(c Config) (HttpSum, error) {
@@ -63,7 +62,7 @@ func (h *HttpSum) Ping(sites []string) error {
 	results := make(chan siteResponse, h.parallel)
 
 	log.Printf("creating %d of goroutine", h.parallel)
-	for i := 0; i < int(h.parallel); i++ {
+	for i := 0; i < h.parallel; i++ {
 		wg.Add(1)
 		go func(jobs <-chan string, resp chan<- siteResponse) {
 			defer wg.Done()
@@ -118,22 +117,30 @@ func (h *HttpSum) get(site string) ([md5.Size]byte, error) {
 		return result, fmt.Errorf("request error %v: %w", site, err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Duration(h.timeout)*time.Second)
-	request = request.WithContext(ctx)
-	defer cancel()
+	var resp *http.Response
 
-	resp, err := h.client.Do(request)
-	if errors.Is(err, context.DeadlineExceeded) {
+	ch := make(chan struct{})
+	go func() {
+		resp, err = h.client.Do(request)
+		close(ch)
+	}()
+
+	select {
+	case <-ch:
+	// pass on
+	case <-time.After(time.Duration(h.timeout) * time.Second):
 		return result, fmt.Errorf("timeout on %#q, %w", site, timeoutError)
-	} else if err != nil {
+	}
+
+	if err != nil {
 		return result, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("failed to connect %#q, status code %#q, %w", site, resp.StatusCode, httpStatusError)
+		return result, fmt.Errorf("failed to connect %#q, status code %d, %w", site, resp.StatusCode, httpStatusError)
 	}
 
+	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return result, err

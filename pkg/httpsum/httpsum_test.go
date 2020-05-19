@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type MockClient struct {
@@ -29,9 +30,9 @@ func TestHttpSum_get(t *testing.T) {
 		body       string
 		timeout    int
 
-		want    [md5.Size]byte
-		wantErr bool
-		err     error
+		want        [md5.Size]byte
+		wantErr     bool
+		expectedErr error
 	}{
 		{
 			name:       "0: successful result",
@@ -40,44 +41,53 @@ func TestHttpSum_get(t *testing.T) {
 			want:       md5.Sum([]byte("hello world")),
 		},
 		{
-			name:       "1: url not found",
-			statusCode: http.StatusNotFound,
-			wantErr:    true,
-			err:        httpStatusError,
+			name:        "1: url not found",
+			statusCode:  http.StatusNotFound,
+			wantErr:     true,
+			expectedErr: httpStatusError,
 		},
 		{
-			name:    "2: timeout",
-			timeout: 3,
-			wantErr: true,
-			err:     timeoutError,
+			name:        "2: timeout",
+			timeout:     2,
+			wantErr:     true,
+			expectedErr: timeoutError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := MockClient{
 				DoFunc: func(req *http.Request) (*http.Response, error) {
+					if tt.timeout > 0 {
+						time.Sleep(time.Duration(tt.timeout) * time.Second)
+					}
 					return &http.Response{
 						StatusCode: tt.statusCode,
 						Body:       ioutil.NopCloser(bytes.NewReader([]byte(tt.body))),
 					}, nil
 				},
 			}
-			h := &HttpSum{
-				client:   &client,
-				parallel: 1,
+
+			c := Config{
+				Client:   &client,
+				Parallel: 1,
+				Timeout:  1,
 			}
+
+			h, err := New(c)
+			if err != nil {
+				t.Errorf("expect nil, got %v", err)
+			}
+
 			got, err := h.get("www.example.com")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if (err != nil) && tt.wantErr {
-				if !errors.As(err, &tt.err) {
-					t.Errorf("get() error = %v, expected error type %v", err, tt.err)
-					return
+				if !errors.Is(err, tt.expectedErr) {
+					t.Errorf("get() error = %v, expected error type %v", err, tt.expectedErr)
 				}
-			}
-			if !reflect.DeepEqual(got, tt.want) {
+			} else if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("get() got = %v, want %v", got, tt.want)
 			}
 		})
