@@ -7,7 +7,7 @@ go build
 
 ### How to execute the file
 You could specify the number of goroutine with `--parallel, -p, --p` arguments.
-
+Default to `10`.
 ```
 > ./http-md5sum --p 5 google.com naver.com jtbc.joins.com anaconda.com yahoo.com cnn.com nytimes.com
 2020/05/19 14:47:14 creating 5 goroutine
