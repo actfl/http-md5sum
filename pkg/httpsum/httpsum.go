@@ -61,7 +61,7 @@ func (h *HttpSum) Ping(sites []string) error {
 	jobs := make(chan string, h.parallel)
 	results := make(chan siteResponse, h.parallel)
 
-	log.Printf("creating %d of goroutine", h.parallel)
+	log.Printf("creating %d goroutine", h.parallel)
 	for i := 0; i < h.parallel; i++ {
 		wg.Add(1)
 		go func(jobs <-chan string, resp chan<- siteResponse) {
