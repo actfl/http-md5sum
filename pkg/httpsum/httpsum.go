@@ -2,9 +2,10 @@ package httpsum
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -93,7 +94,7 @@ func (h *HttpSum) Ping(sites []string) error {
 	for i := 0; i < len(sites); i++ {
 		r := <-results
 		if r.success {
-			fmt.Printf("%s \t\t %x\n", r.site, r.md5)
+			fmt.Printf("%s \t\t %s\n", r.site, r.md5)
 		} else {
 			fmt.Printf("%s \t\t %s\n", r.site, r.err)
 		}
@@ -103,8 +104,8 @@ func (h *HttpSum) Ping(sites []string) error {
 	return nil
 }
 
-func (h *HttpSum) get(site string) ([md5.Size]byte, error) {
-	var result [md5.Size]byte
+func (h *HttpSum) get(site string) (string, error) {
+	var result string
 
 	u, err := url.Parse(site)
 	if err != nil {
@@ -144,11 +145,12 @@ func (h *HttpSum) get(site string) ([md5.Size]byte, error) {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+
+	hash := md5.New()
+	if _, err := io.Copy(hash, resp.Body); err != nil {
 		return result, err
 	}
 
-	result = md5.Sum(body)
-	return result, nil
+	hashInBytes := hash.Sum(nil)[:16]
+	return hex.EncodeToString(hashInBytes), nil
 }

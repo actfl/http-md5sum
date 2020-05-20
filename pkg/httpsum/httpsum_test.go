@@ -2,7 +2,6 @@ package httpsum
 
 import (
 	"bytes"
-	"crypto/md5"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -30,7 +29,7 @@ func TestHttpSum_get(t *testing.T) {
 		body       string
 		timeout    int
 
-		want        [md5.Size]byte
+		want        string
 		wantErr     bool
 		expectedErr error
 	}{
@@ -38,7 +37,7 @@ func TestHttpSum_get(t *testing.T) {
 			name:       "0: successful result",
 			statusCode: http.StatusOK,
 			body:       "hello world",
-			want:       md5.Sum([]byte("hello world")),
+			want:       "5eb63bbbe01eeed093cb22bb8f5acdc3",
 		},
 		{
 			name:        "1: url not found",
